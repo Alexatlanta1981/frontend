@@ -1,4 +1,4 @@
-: Promote pharma-ui to PROD
+names: Promote pharma-ui to PROD
 
 # Triggered manually — picks up the image currently running in QA and opens
 # a PR in the GitOps repo to promote it to PROD.
