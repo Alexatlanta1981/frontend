@@ -19,16 +19,26 @@ jobs:
   promote:
     name: Open PROD Promotion PR
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: prod
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Generate short-lived GitOps token (GitHub App)
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.GITOPS_APP_ID }}
+          private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: gitops
 
       - name: Checkout GitOps repo
-        uses: actions/checkout@v5
+        uses: fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           repository: ${{ env.GITOPS_REPO }}
-          token: ${{ secrets.GITOPS_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           path: _gitops
 
       - name: Install yq
@@ -68,7 +78,7 @@ jobs:
 
       - name: Create branch, patch values, open PR
         env:
-          GH_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           ACTOR: ${{ github.actor }}
           SERVER_URL: ${{ github.server_url }}
           REPOSITORY: ${{ github.repository }}

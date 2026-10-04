@@ -1,10 +1,10 @@
-## zen-pharma-frontend
+## mackllc-frontend
 
-React 18 frontend for the Zen Pharma platform. Served via Nginx inside a Docker container and deployed to AWS EKS via GitOps (ArgoCD).
+React 18 frontend for the MackLLC platform. Served via Nginx inside a Docker container and deployed to AWS EKS via GitOps (ArgoCD).
 
 > **Companion repos:**
 > - [`zen-infra`](https://github.com/your-github-username/zen-infra) — Terraform for AWS infrastructure (EKS, RDS, ECR, IAM)
-> - [`zen-pharma-backend`](https://github.com/your-github-username/zen-pharma-backend) — Spring Boot microservices
+> - [`mackllc-backend`](https://github.com/your-github-username/mackllc-backend) — Spring Boot microservices
 > - [`zen-gitops`](https://github.com/your-github-username/zen-gitops) — ArgoCD apps + Helm values
 
 ---
@@ -29,7 +29,7 @@ React 18 frontend for the Zen Pharma platform. Served via Nginx inside a Docker 
 ## Repository Structure
 
 ```
-zen-pharma-frontend/
+mackllc-frontend/
 ├── public/                  # Static assets
 ├── src/
 │   ├── components/          # Reusable UI components
