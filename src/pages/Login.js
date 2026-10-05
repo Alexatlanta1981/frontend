@@ -95,7 +95,7 @@ export default function Login() {
             <CardContent sx={{ p: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
                 <MedicationIcon color="primary" sx={{ fontSize: 36 }} />
-                <Typography variant="h5" color="primary" fontWeight={700}>ZenPharma</Typography>
+                <Typography variant="h5" color="primary" fontWeight={700}>SAAS - HENRY FORD</Typography>
               </Box>
               <Typography variant="body2" color="text.secondary" mb={3}>
                 Medicine Manufacturing Management System

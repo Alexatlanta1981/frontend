@@ -12,6 +12,6 @@ RUN npm run build
 FROM nginx:1.25-alpine
 COPY --from=builder /app/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-RUN addgroup -S pharma && adduser -S pharma -G pharma
+RUN addgroup -S mackllc && adduser -S mackllc -G mackllc
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

@@ -1,4 +1,4 @@
-// ESLint config for zen-pharma-frontend (React 18)
+// ESLint config for mackllc-frontend (React 18)
 // Extends the react-app preset that ships with react-scripts — avoids
 // duplicating React-specific rules that react-scripts already configures.
 module.exports = {

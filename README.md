@@ -1,10 +1,10 @@
-## zen-pharma-frontend
+## SAAS - HENRY FORD (frontend)
 
-React 18 frontend for the Zen Pharma platform. Served via Nginx inside a Docker container and deployed to AWS EKS via GitOps (ArgoCD).
+React 18 frontend for the SAAS - HENRY FORD platform. Served via Nginx inside a Docker container and deployed to AWS EKS via GitOps (ArgoCD).
 
 > **Companion repos:**
 > - [`zen-infra`](https://github.com/your-github-username/zen-infra) — Terraform for AWS infrastructure (EKS, RDS, ECR, IAM)
-> - [`zen-pharma-backend`](https://github.com/your-github-username/zen-pharma-backend) — Spring Boot microservices
+> - [`mackllc-backend`](https://github.com/your-github-username/mackllc-backend) — Spring Boot microservices
 > - [`zen-gitops`](https://github.com/your-github-username/zen-gitops) — ArgoCD apps + Helm values
 
 ---
@@ -29,7 +29,7 @@ React 18 frontend for the Zen Pharma platform. Served via Nginx inside a Docker 
 ## Repository Structure
 
 ```
-zen-pharma-frontend/
+mackllc-frontend/
 ├── public/                  # Static assets
 ├── src/
 │   ├── components/          # Reusable UI components
@@ -87,8 +87,8 @@ npm run build      # outputs to build/
 ### Build locally
 
 ```bash
-docker build -t pharma-ui:local .
-docker run -p 80:80 pharma-ui:local
+docker build -t mackllc-ui:local .
+docker run -p 80:80 mackllc-ui:local
 # http://localhost:80
 ```
 
@@ -100,7 +100,7 @@ docker run -p 80:80 pharma-ui:local
 | `AUTH_BASE_URL` | Auth service base path | `/api/auth` |
 | `ENV` | Environment name | `dev`, `qa`, `prod` |
 
-These are injected via the `configmap:` section in `zen-gitops/envs/<env>/values-pharma-ui.yaml` and mounted as a ConfigMap in Kubernetes.
+These are injected via the `configmap:` section in `zen-gitops/envs/<env>/values-mackllc-ui.yaml` and mounted as a ConfigMap in Kubernetes.
 
 ---
 
@@ -118,7 +118,7 @@ The `ci.yml` workflow triggers on push to `develop` or `main`:
 7. Trivy image scan (HIGH/CRITICAL)
 8. ECR push → tag: sha-<7chars>
 9. Cosign keyless sign (GitHub OIDC → Fulcio → Rekor)
-10. Update envs/dev/values-pharma-ui.yaml in zen-gitops → ArgoCD auto-syncs dev
+10. Update envs/dev/values-mackllc-ui.yaml in zen-gitops → ArgoCD auto-syncs dev
 11. Open QA promotion PR in zen-gitops
 ```
 
@@ -146,8 +146,8 @@ Set in **Settings → Secrets and variables → Actions**:
 
 ## Deployment
 
-The frontend is deployed as `pharma-ui` via the shared Helm chart in `zen-gitops/helm-charts/`. Nginx configuration and writable volume mounts (required by `readOnlyRootFilesystem: true`) are managed via the Helm values file.
+The frontend is deployed as `mackllc-ui` via the shared Helm chart in `zen-gitops/helm-charts/`. Nginx configuration and writable volume mounts (required by `readOnlyRootFilesystem: true`) are managed via the Helm values file.
 
-Ingress routes `/` to the `pharma-ui` service. All `/api/*` requests are routed by Nginx to the backend api-gateway.
+Ingress routes `/` to the `mackllc-ui` service. All `/api/*` requests are routed by Nginx to the backend api-gateway.
 
 See [`zen-infra/docs/FULL-DEPLOYMENT-GUIDE.md`](https://github.com/your-github-username/zen-infra/blob/main/docs/FULL-DEPLOYMENT-GUIDE.md) for the complete 4-stage deployment guide.

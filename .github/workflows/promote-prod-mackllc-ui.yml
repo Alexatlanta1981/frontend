@@ -1,4 +1,4 @@
-name: Promote pharma-ui to PROD
+names: Promote mackllc-ui to PROD
 
 # Triggered manually — picks up the image currently running in QA and opens
 # a PR in the GitOps repo to promote it to PROD.
@@ -19,16 +19,26 @@ jobs:
   promote:
     name: Open PROD Promotion PR
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: prod
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Generate short-lived GitOps token (GitHub App)
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.GITOPS_APP_ID }}
+          private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: gitops
 
       - name: Checkout GitOps repo
-        uses: actions/checkout@v5
+        uses: fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           repository: ${{ env.GITOPS_REPO }}
-          token: ${{ secrets.GITOPS_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           path: _gitops
 
       - name: Install yq
@@ -39,7 +49,7 @@ jobs:
 
       - name: Validate QA values file exists
         run: |
-          QA_VALUES="_gitops/envs/qa/values-pharma-ui.yaml"
+          QA_VALUES="_gitops/envs/qa/values-mackllc-ui.yaml"
           if [[ ! -f "$QA_VALUES" ]]; then
             echo "::error::QA values file not found: ${QA_VALUES}"
             echo "::error::Cannot determine which image is running in QA."
@@ -59,23 +69,23 @@ jobs:
 
       - name: Validate PROD values file exists
         run: |
-          PROD_VALUES="_gitops/envs/prod/values-pharma-ui.yaml"
+          PROD_VALUES="_gitops/envs/prod/values-mackllc-ui.yaml"
           if [[ ! -f "$PROD_VALUES" ]]; then
             echo "::error::PROD values file not found: ${PROD_VALUES}"
             exit 1
           fi
-          echo "PROD_VALUES=envs/prod/values-pharma-ui.yaml" >> "$GITHUB_ENV"
+          echo "PROD_VALUES=envs/prod/values-mackllc-ui.yaml" >> "$GITHUB_ENV"
 
       - name: Create branch, patch values, open PR
         env:
-          GH_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           ACTOR: ${{ github.actor }}
           SERVER_URL: ${{ github.server_url }}
           REPOSITORY: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
           GITOPS_REPO_NAME: ${{ env.GITOPS_REPO }}
         run: |
-          BRANCH="promote/prod/pharma-ui/${IMAGE_TAG}"
+          BRANCH="promote/prod/mackllc-ui/${IMAGE_TAG}"
 
           cd _gitops
           git checkout -b "$BRANCH"
@@ -87,13 +97,13 @@ jobs:
             echo "::notice::PROD already has image ${IMAGE_TAG} — no PR needed."
             exit 0
           fi
-          git commit -m "promote(prod): pharma-ui → ${IMAGE_TAG}"
+          git commit -m "promote(prod): mackllc-ui → ${IMAGE_TAG}"
           git push origin "$BRANCH"
 
           printf '%s\n' \
             "## PROD Promotion" \
             "" \
-            "Service : pharma-ui" \
+            "Service : mackllc-ui" \
             "Image   : ${IMAGE_TAG}" \
             "Promoted from QA by : ${ACTOR}" \
             "Workflow run : ${SERVER_URL}/${REPOSITORY}/actions/runs/${RUN_ID}" \
@@ -105,16 +115,16 @@ jobs:
             "- [ ] Runbook link added to change ticket" \
             "" \
             "## Post-merge" \
-            "ArgoCD app \`pharma-prod/pharma-ui\` is configured for **manual sync**." \
+            "ArgoCD app \`mackllc-prod/mackllc-ui\` is configured for **manual sync**." \
             "After merging, trigger sync in ArgoCD and monitor the rollout." \
             "" \
             "Merging this PR updates ${PROD_VALUES}." > /tmp/pr-body.md
 
           gh pr create \
             --repo "$GITOPS_REPO_NAME" \
-            --title "promote(prod): pharma-ui → ${IMAGE_TAG}" \
+            --title "promote(prod): mackllc-ui → ${IMAGE_TAG}" \
             --body-file /tmp/pr-body.md \
             --base main \
             --head "$BRANCH"
 
-          echo "::notice title=PROD PR opened::Review, get approvals, and merge in ${GITOPS_REPO_NAME}. Then manually sync ArgoCD pharma-prod/pharma-ui."
+          echo "::notice title=PROD PR opened::Review, get approvals, and merge in ${GITOPS_REPO_NAME}. Then manually sync ArgoCD mackllc-prod/mackllc-ui."
