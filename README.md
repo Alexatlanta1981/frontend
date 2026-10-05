@@ -1,6 +1,6 @@
-## mackllc-frontend
+## SAAS - HENRY FORD (frontend)
 
-React 18 frontend for the MackLLC platform. Served via Nginx inside a Docker container and deployed to AWS EKS via GitOps (ArgoCD).
+React 18 frontend for the SAAS - HENRY FORD platform. Served via Nginx inside a Docker container and deployed to AWS EKS via GitOps (ArgoCD).
 
 > **Companion repos:**
 > - [`zen-infra`](https://github.com/your-github-username/zen-infra) — Terraform for AWS infrastructure (EKS, RDS, ECR, IAM)
