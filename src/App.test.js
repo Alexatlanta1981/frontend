@@ -17,5 +17,5 @@ test('renders login page', () => {
       </QueryClientProvider>
     </MemoryRouter>
   );
-  expect(screen.getByText(/MackLLC/i)).toBeInTheDocument();
+  expect(screen.getByText(/SAAS - HENRY FORD/i)).toBeInTheDocument();
 });
