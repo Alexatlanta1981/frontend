@@ -171,7 +171,7 @@ export default function Dashboard() {
               {[
                 { text: 'Batch #B-2026-071 passed QC inspection', time: '2 hours ago', color: '#4CAF50' },
                 { text: 'New drug "Amoxicillin 500mg" added to catalog', time: '4 hours ago', color: '#2196F3' },
-                { text: 'Supplier "PharmaChem Ltd" updated contract', time: '6 hours ago', color: '#FF9800' },
+                { text: 'Supplier "MackllcChem Ltd" updated contract', time: '6 hours ago', color: '#FF9800' },
                 { text: 'Inventory alert: Paracetamol below threshold', time: '8 hours ago', color: '#f44336' },
                 { text: 'Batch #B-2026-070 started production', time: '12 hours ago', color: '#9C27B0' },
               ].map((item, i) => (

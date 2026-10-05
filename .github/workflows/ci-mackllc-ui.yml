@@ -1,8 +1,8 @@
-name: CI/CD — pharma-ui
+name: CI/CD — mackllc-ui
 
 # Triggers on push to develop / release branches only.
 # PRs → lint, test, security run but no Docker build.
-# PROD promotion → promote-prod-pharma-ui.yml (workflow_dispatch)
+# PROD promotion → promote-prod-mackllc-ui.yml (workflow_dispatch)
 
 on:
   push:
@@ -24,7 +24,7 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: pharma-ui
+  ECR_REPOSITORY: mackllc-ui
   GITOPS_REPO: ${{ vars.GITOPS_REPO }}
 
 jobs:
@@ -158,7 +158,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: 61815dcd50bd041e203e49132bacad1fd04d2708 # v5
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/pharma-dev-ecr-push-gha
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/mackllc-dev-ecr-push-gha
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -222,11 +222,11 @@ jobs:
           IMAGE_TAG: ${{ needs.docker-build-push.outputs.image_tag }}
         run: |
           yq e ".image.tag = \"${IMAGE_TAG}\"" -i \
-            "_gitops/envs/dev/values-pharma-ui.yaml"
+            "_gitops/envs/dev/values-mackllc-ui.yaml"
           cd _gitops
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           git diff --staged --quiet && echo "Already up to date" && exit 0
-          git commit -m "ci(dev): update pharma-ui → ${IMAGE_TAG}"
+          git commit -m "ci(dev): update mackllc-ui → ${IMAGE_TAG}"
           git push

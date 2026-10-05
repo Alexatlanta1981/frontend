@@ -4,24 +4,24 @@ import api from '../services/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem('pharma_token'));
+  const [token, setToken] = useState(localStorage.getItem('mackllc_token'));
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('pharma_user');
+    const saved = localStorage.getItem('mackllc_user');
     return saved ? JSON.parse(saved) : null;
   });
 
   const login = useCallback(async (username, password) => {
     const response = await api.post('/auth/login', { username, password });
     const { token: newToken, username: uname, role } = response.data;
-    localStorage.setItem('pharma_token', newToken);
-    localStorage.setItem('pharma_user', JSON.stringify({ username: uname, role }));
+    localStorage.setItem('mackllc_token', newToken);
+    localStorage.setItem('mackllc_user', JSON.stringify({ username: uname, role }));
     setToken(newToken);
     setUser({ username: uname, role });
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('pharma_token');
-    localStorage.removeItem('pharma_user');
+    localStorage.removeItem('mackllc_token');
+    localStorage.removeItem('mackllc_user');
     setToken(null);
     setUser(null);
   }, []);
