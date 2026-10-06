@@ -1,153 +1,64 @@
-## SAAS - HENRY FORD (frontend)
+# SAAS - HENRY FORD (frontend)
 
-React 18 frontend for the SAAS - HENRY FORD platform. Served via Nginx inside a Docker container and deployed to AWS EKS via GitOps (ArgoCD).
+`mackllc-ui`: the React 18 web app for the `mackllc` platform, served by Nginx in a container. CI builds, scans, signs and pushes the image to ECR, then updates the image tag in `gitops` so Argo CD deploys it.
 
-> **Companion repos:**
-> - [`zen-infra`](https://github.com/your-github-username/zen-infra) — Terraform for AWS infrastructure (EKS, RDS, ECR, IAM)
-> - [`mackllc-backend`](https://github.com/your-github-username/mackllc-backend) — Spring Boot microservices
-> - [`zen-gitops`](https://github.com/your-github-username/zen-gitops) — ArgoCD apps + Helm values
+Companion repos: [infra](https://github.com/Alexatlanta1981/infra) (AWS, Terraform, bootstrap scripts), [gitops](https://github.com/Alexatlanta1981/gitops) (desired state), [backend](https://github.com/Alexatlanta1981/backend) (API services).
 
----
+## Architecture
 
-## Tech Stack
+```
+ browser ──► shared ALB ──► "/"    ──► mackllc-ui (Nginx, port 80)
+                      └───► "/api" ──► api-gateway (backend)
 
-| Layer | Technology |
+ push to develop / main
+   ci-mackllc-ui.yml: ESLint, Jest, CodeQL, Semgrep, npm audit
+        ──► docker build (node:20-alpine ─► nginx:alpine, non-root)
+        ──► Trivy ──► push ECR mackllc-ui:sha-<7> ──► Cosign keyless sign
+        ──► GitHub App token: commit tag to gitops envs/dev ──► Argo CD syncs
+
+ promote-qa-mackllc-ui.yml / promote-prod-mackllc-ui.yml: move a built tag to qa / prod
+```
+
+## Layout
+
+| Path | What it holds |
 |---|---|
-| Framework | React 18 |
-| Build tool | Create React App / npm |
-| Web server | Nginx (serves static build) |
-| Container | Docker (multi-stage: node:20-alpine build → nginx:alpine) |
-| Code quality | ESLint + Prettier |
-| Testing | Jest + React Testing Library |
-| Static analysis | CodeQL + Semgrep |
-| SCA | `npm audit` |
-| Image scan | Trivy |
-| Image signing | Cosign (keyless) |
+| `src/`, `public/` | React app. |
+| `nginx.conf` | Serves the build and handles SPA routing. |
+| `Dockerfile` | Multi-stage build: npm build, then Nginx. |
+| `.github/workflows/` | `ci-mackllc-ui.yml`, `promote-qa-mackllc-ui.yml`, `promote-prod-mackllc-ui.yml`. |
 
----
+Runtime values (`AUTH_BASE_URL`, `ENV`) come from the ConfigMap in `gitops/envs/<env>/values-mackllc-ui.yaml`.
 
-## Repository Structure
-
-```
-mackllc-frontend/
-├── public/                  # Static assets
-├── src/
-│   ├── components/          # Reusable UI components
-│   ├── pages/               # Route-level page components
-│   ├── services/            # API client (axios)
-│   └── App.jsx
-├── nginx.conf               # Nginx configuration for the container
-├── Dockerfile               # Multi-stage: npm build → nginx serve
-├── sonar-project.properties # SonarCloud configuration
-└── .github/
-    └── workflows/
-        ├── ci.yml                       # Full CI + DEV deploy + QA PR
-        └── _reusable-update-gitops.yml  # Reusable: update zen-gitops image tag
-```
-
----
-
-## Local Development
-
-### Prerequisites
-- Node.js 20+
-- npm 9+
-
-### Install and run
+## Running it
 
 ```bash
 npm install
-npm start          # http://localhost:3000
-```
-
-### Run tests
-
-```bash
-npm test                          # interactive watch mode
-npm test -- --watchAll=false      # single run (used in CI)
-npm test -- --coverage            # with coverage report
-```
-
-### Lint
-
-```bash
+npm start                          # http://localhost:3000
+npm test -- --watchAll=false       # single run (as in CI)
+npm test -- --coverage
 npm run lint
-```
+npm run build                      # outputs build/
 
-### Production build
-
-```bash
-npm run build      # outputs to build/
-```
-
----
-
-## Docker
-
-### Build locally
-
-```bash
 docker build -t mackllc-ui:local .
 docker run -p 80:80 mackllc-ui:local
-# http://localhost:80
 ```
 
-### Environment variables (runtime via ConfigMap)
+In CI: push to `develop` or `main` runs the pipeline; promotion is manual dispatch.
 
-| Variable | Description | Example |
-|---|---|---|
-| `API_BASE_URL` | Backend API base path | `/api` |
-| `AUTH_BASE_URL` | Auth service base path | `/api/auth` |
-| `ENV` | Environment name | `dev`, `qa`, `prod` |
+Required repo settings: variable `GITOPS_APP_ID` and `GITOPS_REPO`; secrets `GITOPS_APP_PRIVATE_KEY`, `AWS_ACCOUNT_ID`. GitHub App setup: [infra runbook](https://github.com/Alexatlanta1981/infra/blob/main/docs/DEPLOY-RUNBOOK.md).
 
-These are injected via the `configmap:` section in `zen-gitops/envs/<env>/values-mackllc-ui.yaml` and mounted as a ConfigMap in Kubernetes.
+## Why it is designed this way
 
----
+- **Static build behind Nginx.** Small image, no Node at runtime.
+- **Non-root container.** Reduces blast radius.
+- **Layered scanning.** Lint, tests, CodeQL, Semgrep, npm audit and Trivy catch different problems.
+- **Immutable `sha-<7>` tags and Cosign signing.** Deployed images are traceable and verifiable.
+- **OIDC to AWS, GitHub App to gitops.** No stored keys or personal tokens.
+- **CI never touches the cluster.** It commits a tag to `gitops`; Argo CD deploys, and rollback is a revert.
+- **Config in the ConfigMap, not the image.** One image runs in every environment.
 
-## CI Pipeline
+## Known gaps
 
-The `ci.yml` workflow triggers on push to `develop` or `main`:
-
-```
-1. Lint (ESLint)
-2. Test (Jest + coverage)
-3. CodeQL SAST
-4. Semgrep SAST (p/javascript, p/owasp-top-ten)
-5. npm audit (fail on HIGH/CRITICAL)
-6. Docker build (multi-stage, non-root UID 1000)
-7. Trivy image scan (HIGH/CRITICAL)
-8. ECR push → tag: sha-<7chars>
-9. Cosign keyless sign (GitHub OIDC → Fulcio → Rekor)
-10. Update envs/dev/values-mackllc-ui.yaml in zen-gitops → ArgoCD auto-syncs dev
-11. Open QA promotion PR in zen-gitops
-```
-
-**Authentication to AWS:** GitHub OIDC — no `AWS_ACCESS_KEY_ID` stored as a secret.
-
-See [`zen-infra/docs/CICD-IMPLEMENTATION.md`](https://github.com/your-github-username/zen-infra/blob/main/docs/CICD-IMPLEMENTATION.md) for full architecture details.
-
----
-
-## Required GitHub Secrets
-
-Set in **Settings → Secrets and variables → Actions**:
-
-| Secret | Description |
-|---|---|
-| `AWS_ACCOUNT_ID` | 12-digit AWS account ID |
-| `GITOPS_TOKEN` | GitHub PAT with `contents: write` on `your-github-username/zen-gitops` |
-| `SEMGREP_APP_TOKEN` | Semgrep Cloud token (optional) |
-
-| Variable | Value |
-|---|---|
-| `GITOPS_REPO` | `your-github-username/zen-gitops` |
-
----
-
-## Deployment
-
-The frontend is deployed as `mackllc-ui` via the shared Helm chart in `zen-gitops/helm-charts/`. Nginx configuration and writable volume mounts (required by `readOnlyRootFilesystem: true`) are managed via the Helm values file.
-
-Ingress routes `/` to the `mackllc-ui` service. All `/api/*` requests are routed by Nginx to the backend api-gateway.
-
-See [`zen-infra/docs/FULL-DEPLOYMENT-GUIDE.md`](https://github.com/your-github-username/zen-infra/blob/main/docs/FULL-DEPLOYMENT-GUIDE.md) for the complete 4-stage deployment guide.
+- Trivy findings are non-blocking.
+- No end-to-end (browser) tests.
